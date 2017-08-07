@@ -72,29 +72,35 @@ function authorize (req, res, next) {
 
       function includeIDToken (response, callback) {
         if (responseTypes.indexOf('id_token') !== -1) {
-          var shasum, hash, atHash
+          Role.get(req.client._id, function (err, instance) {
+            if (err) { return callback(err) }
+            if (!instance) { return callback(new NotFoundError()) }
 
-          if (response.access_token) {
-            shasum = crypto.createHash('sha256')
-            shasum.update(response.access_token)
-            hash = shasum.digest('hex')
-            atHash = hash.slice(0, hash.length / 2)
+            var shasum, hash, atHash
+
+            if (response.access_token) {
+              shasum = crypto.createHash('sha256')
+              shasum.update(response.access_token)
+              hash = shasum.digest('hex')
+              atHash = hash.slice(0, hash.length / 2)
+            }
+
+            var idToken = new IDToken({
+              iss: settings.issuer,
+              sub: req.user._id,
+              aud: req.client._id,
+              exp: nowSeconds(response.expires_in),
+              nonce: params.nonce,
+              at_hash: atHash,
+              amr: req.session.amr,
+              roles: instance
+            })
+
+            response.id_token = idToken.encode(settings.keys.sig.prv)
           }
 
-          var idToken = new IDToken({
-            iss: settings.issuer,
-            sub: req.user._id,
-            aud: req.client._id,
-            exp: nowSeconds(response.expires_in),
-            nonce: params.nonce,
-            at_hash: atHash,
-            amr: req.session.amr
-          })
-
-          response.id_token = idToken.encode(settings.keys.sig.prv)
-        }
-
-        callback(null, response)
+          callback(null, response)
+        })
       }
 
     ], function (err, response) {
