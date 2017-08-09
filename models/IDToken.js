@@ -55,7 +55,7 @@ var IDToken = JWT.define({
     acr: { format: 'String' },
     at_hash: { format: 'String' },
     amr: { format: 'String*' },
-    roles: { format: 'String' }
+    roles: { format: 'String*' }
   }
 
 })
