@@ -14,6 +14,8 @@ var UnauthorizedError = require('../errors/UnauthorizedError')
 var InsufficientScopeError = require('../errors/InsufficientScopeError')
 var nowSeconds = require('../lib/time-utils').nowSeconds
 
+var Role = require('../models/Role')
+
 /**
  * Model definition
  */
@@ -69,11 +71,15 @@ var AccessToken = Modinha.define('accesstokens', {
     required: true
   },
 
+  // roles
+  role: {
+    type: 'array'
+  },
+
   // jwt?????
   jwt: {
     type: 'string'
   }
-
 })
 
 /**
@@ -166,28 +172,37 @@ AccessToken.issue = function (request, callback) {
   if (!request.user || !request.client) {
     return callback(new Error('invalid_request'))
   }
+  var self = this
 
-  this.insert({
-    iss: settings.issuer,
-    uid: request.user._id,
-    cid: request.client._id,
-    ei: (
-      request.connectParams &&
-      parseInt(request.connectParams.max_age, 10)
-      ) ||
-      request.client.default_max_age,
-    scope: request.scope
-  }, function (err, token) {
+  Role.listByUsers(request.user._id, function (err, instance) {
+    var role = []
     if (err) { return callback(err) }
-    var response = token.project('issue')
-
-    // Unless the client is set to issue a random token,
-    // transform it to a signed JWT.
-    if (request.client.access_token_type !== 'random') {
-      response.access_token = token.toJWT(settings.keys.sig.prv)
+    if (instance) {
+      role = instance.map(function (a) { return a.name })
     }
+    self.insert({
+      iss: settings.issuer,
+      uid: request.user._id,
+      cid: request.client._id,
+      ei: (
+        request.connectParams &&
+        parseInt(request.connectParams.max_age, 10)
+        ) ||
+        request.client.default_max_age,
+      role: role,
+      scope: request.scope
+    }, function (err, token) {
+      if (err) { return callback(err) }
+      var response = token.project('issue')
 
-    callback(null, response)
+      // Unless the client is set to issue a random token,
+      // transform it to a signed JWT.
+      if (request.client.access_token_type !== 'random') {
+        response.access_token = token.toJWT(settings.keys.sig.prv)
+      }
+
+      callback(null, response)
+    })
   })
 }
 

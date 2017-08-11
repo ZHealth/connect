@@ -75,10 +75,10 @@ function authorize (req, res, next) {
       function includeIDToken (response, callback) {
         if (responseTypes.indexOf('id_token') !== -1) {
           Role.listByUsers(req.user._id, function (err, instance) {
-            roles = []
+            var role = []
             if (err) { return callback(err) }
             if (instance) {
-              roles = instance.map(function (a) { return a.name })
+              role = instance.map(function (a) { return a.name })
             }
 
             var shasum, hash, atHash
@@ -98,7 +98,7 @@ function authorize (req, res, next) {
               nonce: params.nonce,
               at_hash: atHash,
               amr: req.session.amr,
-              roles: roles
+              role: role
             })
 
             response.id_token = idToken.encode(settings.keys.sig.prv)

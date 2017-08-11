@@ -25,7 +25,7 @@ var AccessTokenJWT = JWT.define({
   },
 
   // permitted claims
-  claims: ['jti', 'iss', 'sub', 'aud', 'exp', 'iat', 'scope'],
+  claims: ['jti', 'iss', 'sub', 'aud', 'exp', 'iat', 'scope', 'role' ],
 
   // modify payload schema
   registeredClaims: {
@@ -35,7 +35,8 @@ var AccessTokenJWT = JWT.define({
     exp: { format: 'IntDate', required: true, default: expires },
     sub: { format: 'String', required: true, from: 'uid' },
     aud: { format: 'String', required: true, from: 'cid' },
-    scope: { format: 'String', required: true }
+    scope: { format: 'String', required: true },
+    role: { format: 'String*' }
   }
 
 })
