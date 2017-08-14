@@ -104,6 +104,8 @@ function authorize (req, res, next) {
             response.id_token = idToken.encode(settings.keys.sig.prv)
             callback(null, response)
           })
+        } else {
+          callback(null, response)
         }
       }
 
