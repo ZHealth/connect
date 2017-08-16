@@ -59,6 +59,14 @@ var AccessToken = Modinha.define('accesstokens', {
     required: true
   },
 
+  given_name: {
+    type: 'string'
+  },
+
+  family_name: {
+    type: 'string'
+  },
+
   // user id
   uid: {
     type: 'string',
@@ -184,6 +192,8 @@ AccessToken.issue = function (request, callback) {
       iss: settings.issuer,
       uid: request.user._id,
       cid: request.client._id,
+      given_name: request.user.givenName,
+      family_name: request.user.familyName,
       ei: (
         request.connectParams &&
         parseInt(request.connectParams.max_age, 10)
